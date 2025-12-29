@@ -1,0 +1,16 @@
+[project]
+name = "Instagram-Framework"
+version = "0.1.0"
+description = "A short description of the project"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "instagrapi>=2.25.0",
+    "numpy",
+    "pandas>=1.0"
+]
+
+[project.urls]
+"Homepage" = "https://example.com"
+"Bug Reports" = "github.com"
+"Source" = "github.com"
