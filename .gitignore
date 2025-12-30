@@ -1,0 +1,7 @@
+.env
+.idea/
+ig_session.json
+targets.txt
+story_state.json
+downloads/
+__pycache__/
