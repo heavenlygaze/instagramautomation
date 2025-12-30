@@ -136,6 +136,14 @@ When you run the script, you should see output similar to this
 - **Missing dependencies**: If you encounter missing dependencies, ensure you've installed all necessary Python packages.
 
 
+### TODO
+
+In the future I would like to also expand this repo with the following modules:
+- Adding stories (photo/video) from files
+- Emailing when someone messages me/replies to a story
+- 
+
+
 ### License
 
 This project is licensed under the MIT License.

@@ -3,5 +3,6 @@
 ig_session.json
 targets.txt
 story_state.json
+notify_users.txt
 downloads/
 __pycache__/

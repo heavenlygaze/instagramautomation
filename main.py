@@ -19,6 +19,7 @@ def main() -> int:
     ap.add_argument("--download", action="store_true", help="Download newly detected stories")
     ap.add_argument("--out", type=str, default="downloads", help="Output folder for downloads")
     ap.add_argument("--sleep", type=float, default=0.8, help="Sleep between users (seconds)")
+    ap.add_argument("--notify", type=str, default="notify_users.txt", help="Path to the file with users to notify")
     args = ap.parse_args()
 
     # Load credentials
@@ -56,6 +57,15 @@ def main() -> int:
     for uname in target_usernames:
         if uname not in last_seen:
             last_seen[uname] = 0  # or None depending on how you want to initialize
+
+    notify_path = Path(args.notify)
+    if not notify_path.exists():
+        print(f"Notify file not found: {notify_path}", file=sys.stderr)
+        sys.exit(2)
+
+    # Load users to notify from external file
+    users_to_notify = load_lines(notify_path)
+
 
     # Initialize Instagrapi client
     try:
@@ -99,16 +109,21 @@ def main() -> int:
 
         if args.download:
             try:
-                download_stories(cl, new_pks, out_dir, uname)
+                # Download the story and get the file path
+                story_file_path = download_stories(cl, new_pks, out_dir, uname)
             except Exception as e:
                 print(f"[WARN] Failed to download stories for @{uname}: {e}", file=sys.stderr)
-
+                continue
+        else:
+            story_file_path = None
         # Send an email if this user is in the 'users_to_notify' list
-        users_to_notify = ['billieeilish', 'snoopdogg']  # Define which users you want to be notified about
         if uname in users_to_notify:
             subject = f"New story posted by {uname}!"
             body = f"Check out the latest story posted by @{uname} on Instagram."
-            send_email(subject, body, email_username)
+            if story_file_path:
+                send_email(subject, body, email_username, attachment_path=story_file_path)
+            else:
+                send_email(subject, body, email_username)
 
         last_seen[uname] = max(new_pks)
         sleep(args.sleep)
