@@ -3,6 +3,7 @@ import argparse
 import sys
 from pathlib import Path
 from time import sleep
+import random
 
 from config import load_dotenv_and_get_credentials
 from file_utils import load_lines, load_json, save_json
@@ -20,6 +21,8 @@ def main() -> int:
     ap.add_argument("--out", type=str, default="downloads", help="Output folder for downloads")
     ap.add_argument("--sleep", type=float, default=0.8, help="Sleep between users (seconds)")
     ap.add_argument("--notify", type=str, default="notify_users.txt", help="Path to the file with users to notify")
+    ap.add_argument("--min_sleep", type=float, default=2, help="Minimum random sleep time (seconds)")
+    ap.add_argument("--max_sleep", type=float, default=15, help="Maximum random sleep time (seconds)")
     args = ap.parse_args()
 
     # Load credentials
@@ -87,12 +90,12 @@ def main() -> int:
             stories = cl.user_stories(uid)
         except Exception as e:
             print(f"[WARN] Failed fetching stories for @{uname}: {e}", file=sys.stderr)
-            sleep(args.sleep)
+            sleep(random.uniform(args.min_sleep, args.max_sleep))
             continue
 
         if not stories:
             print(f"@{uname}: no active stories")
-            sleep(args.sleep)
+            sleep(random.uniform(args.min_sleep, args.max_sleep))
             continue
 
         last = last_seen.get(uname, 0)
@@ -101,7 +104,7 @@ def main() -> int:
 
         if not new_pks:
             print(f"@{uname}: no new stories since last check")
-            sleep(args.sleep)
+            sleep(random.uniform(args.min_sleep, args.max_sleep))
             continue
 
         any_new = True
@@ -126,7 +129,7 @@ def main() -> int:
                 send_email(subject, body, email_username)
 
         last_seen[uname] = max(new_pks)
-        sleep(args.sleep)
+        sleep(random.uniform(args.min_sleep, args.max_sleep))
 
     # Save the updated state
     try:
