@@ -3,8 +3,11 @@ import time
 from typing import Dict, List
 from pathlib import Path
 from typing import Optional, Any
+from time import sleep
+from random import randint
 
 def login_with_session(session_path: Path, username: str, password: str) -> Client:
+    sleep(randint(10, 60))
     cl = Client()
     if session_path.exists():
         try:
