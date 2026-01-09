@@ -40,7 +40,6 @@ def main() -> int:
     targets_path = Path(args.targets)
     if not targets_path.exists():
         logger.error(f"Targets file not found: {targets_path}")
-        print(f"Targets file not found: {targets_path}", file=sys.stderr)
         sys.exit(2)
 
     state_path = Path(args.state)
@@ -52,7 +51,6 @@ def main() -> int:
         state = load_state(state_path)
     except Exception as e:
         logger.error(f"Error loading state: {e}")
-        print(f"Error loading state: {e}", file=sys.stderr)
         sys.exit(2)
 
     user_id_cache, last_seen = state["user_id_cache"], state["last_seen"]
@@ -62,7 +60,6 @@ def main() -> int:
         target_usernames = load_lines(targets_path)
     except Exception as e:
         logger.error(f"Error reading targets file: {e}")
-        print(f"Error reading targets file: {e}", file=sys.stderr)
         sys.exit(2)
 
     for uname in target_usernames:
@@ -72,7 +69,6 @@ def main() -> int:
     notify_path = Path(args.notify)
     if not notify_path.exists():
         logger.error(f"Notify file not found: {notify_path}")
-        print(f"Notify file not found: {notify_path}", file=sys.stderr)
         sys.exit(2)
 
     # Load users to notify from external file
@@ -84,7 +80,6 @@ def main() -> int:
         cl = login_with_session(session_path, username, password)
     except Exception as e:
         logger.error(f"Error logging in: {e}")
-        print(f"Error logging in: {e}", file=sys.stderr)
         sys.exit(2)
 
     # Resolve target usernames to user IDs
@@ -92,7 +87,6 @@ def main() -> int:
         resolved = resolve_targets_to_ids(cl, target_usernames, user_id_cache)
     except Exception as e:
         logger.error(f"Error resolving usernames to IDs: {e}")
-        print(f"Error resolving usernames to IDs: {e}", file=sys.stderr)
         sys.exit(2)
 
     any_new = False
@@ -101,13 +95,11 @@ def main() -> int:
             stories = cl.user_stories(uid)
         except Exception as e:
             logger.warning(f"Failed fetching stories for @{uname}: {e}")
-            print(f"[WARN] Failed fetching stories for @{uname}: {e}", file=sys.stderr)
             sleep(random.uniform(args.min_sleep, args.max_sleep))
             continue
 
         if not stories:
             logger.info(f"@{uname}: no active stories")
-            print(f"@{uname}: no active stories")
             sleep(random.uniform(args.min_sleep, args.max_sleep))
             continue
 
@@ -117,13 +109,11 @@ def main() -> int:
 
         if not new_pks:
             logger.info(f"@{uname}: no new stories since last check")
-            print(f"@{uname}: no new stories since last check")
             sleep(random.uniform(args.min_sleep, args.max_sleep))
             continue
 
         any_new = True
         logger.info(f"@{uname}: NEW stories detected ({len(new_pks)} items)")
-        print(f"@{uname}: NEW stories detected ({len(new_pks)} items)")
 
         if args.download:
             try:
@@ -131,7 +121,6 @@ def main() -> int:
                 story_file_path = download_stories(cl, new_pks, out_dir, uname)
             except Exception as e:
                 logger.warning(f"Failed to download stories for @{uname}: {e}")
-                print(f"[WARN] Failed to download stories for @{uname}: {e}", file=sys.stderr)
                 continue
         else:
             story_file_path = None
@@ -153,16 +142,13 @@ def main() -> int:
         save_state(state_path, state)
     except Exception as e:
         logger.error(f"Error saving state: {e}")
-        print(f"Error saving state: {e}", file=sys.stderr)
         sys.exit(2)
 
     if any_new:
         logger.info("\nDone: new stories found.")
-        print("\nDone: new stories found.")
         return 0
     else:
         logger.info("\nDone: no new stories found.")
-        print("\nDone: no new stories found.")
         return 0
 
 if __name__ == "__main__":
