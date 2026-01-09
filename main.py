@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from time import sleep
 import random
+from log import setup_logging
 
 from config import load_dotenv_and_get_credentials
 from file_utils import load_lines, load_json, save_json
@@ -11,6 +12,8 @@ from instagrapi_utils import login_with_session, resolve_targets_to_ids, story_p
 from story_utils import download_stories
 from state_utils import load_state, save_state
 from email_utils import send_email
+
+logger = setup_logging()
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -21,9 +24,11 @@ def main() -> int:
     ap.add_argument("--out", type=str, default="downloads", help="Output folder for downloads")
     ap.add_argument("--sleep", type=float, default=0.8, help="Sleep between users (seconds)")
     ap.add_argument("--notify", type=str, default="notify_users.txt", help="Path to the file with users to notify")
-    ap.add_argument("--min_sleep", type=float, default=2, help="Minimum random sleep time (seconds)")
+    ap.add_argument("--min_sleep", type=float, default=3, help="Minimum random sleep time (seconds)")
     ap.add_argument("--max_sleep", type=float, default=15, help="Maximum random sleep time (seconds)")
     args = ap.parse_args()
+
+    logger.info("Starting the Instagram story checker script.")
 
     # Load credentials
     try:
@@ -34,6 +39,7 @@ def main() -> int:
 
     targets_path = Path(args.targets)
     if not targets_path.exists():
+        logger.error(f"Targets file not found: {targets_path}")
         print(f"Targets file not found: {targets_path}", file=sys.stderr)
         sys.exit(2)
 
@@ -45,6 +51,7 @@ def main() -> int:
     try:
         state = load_state(state_path)
     except Exception as e:
+        logger.error(f"Error loading state: {e}")
         print(f"Error loading state: {e}", file=sys.stderr)
         sys.exit(2)
 
@@ -54,6 +61,7 @@ def main() -> int:
     try:
         target_usernames = load_lines(targets_path)
     except Exception as e:
+        logger.error(f"Error reading targets file: {e}")
         print(f"Error reading targets file: {e}", file=sys.stderr)
         sys.exit(2)
 
@@ -63,6 +71,7 @@ def main() -> int:
 
     notify_path = Path(args.notify)
     if not notify_path.exists():
+        logger.error(f"Notify file not found: {notify_path}")
         print(f"Notify file not found: {notify_path}", file=sys.stderr)
         sys.exit(2)
 
@@ -74,6 +83,7 @@ def main() -> int:
     try:
         cl = login_with_session(session_path, username, password)
     except Exception as e:
+        logger.error(f"Error logging in: {e}")
         print(f"Error logging in: {e}", file=sys.stderr)
         sys.exit(2)
 
@@ -81,6 +91,7 @@ def main() -> int:
     try:
         resolved = resolve_targets_to_ids(cl, target_usernames, user_id_cache)
     except Exception as e:
+        logger.error(f"Error resolving usernames to IDs: {e}")
         print(f"Error resolving usernames to IDs: {e}", file=sys.stderr)
         sys.exit(2)
 
@@ -89,11 +100,13 @@ def main() -> int:
         try:
             stories = cl.user_stories(uid)
         except Exception as e:
+            logger.warning(f"Failed fetching stories for @{uname}: {e}")
             print(f"[WARN] Failed fetching stories for @{uname}: {e}", file=sys.stderr)
             sleep(random.uniform(args.min_sleep, args.max_sleep))
             continue
 
         if not stories:
+            logger.info(f"@{uname}: no active stories")
             print(f"@{uname}: no active stories")
             sleep(random.uniform(args.min_sleep, args.max_sleep))
             continue
@@ -103,11 +116,13 @@ def main() -> int:
         new_pks = [pk for pk in story_pks if pk > last]
 
         if not new_pks:
+            logger.info(f"@{uname}: no new stories since last check")
             print(f"@{uname}: no new stories since last check")
             sleep(random.uniform(args.min_sleep, args.max_sleep))
             continue
 
         any_new = True
+        logger.info(f"@{uname}: NEW stories detected ({len(new_pks)} items)")
         print(f"@{uname}: NEW stories detected ({len(new_pks)} items)")
 
         if args.download:
@@ -115,6 +130,7 @@ def main() -> int:
                 # Download the story and get the file path
                 story_file_path = download_stories(cl, new_pks, out_dir, uname)
             except Exception as e:
+                logger.warning(f"Failed to download stories for @{uname}: {e}")
                 print(f"[WARN] Failed to download stories for @{uname}: {e}", file=sys.stderr)
                 continue
         else:
@@ -136,13 +152,16 @@ def main() -> int:
         state["user_id_cache"], state["last_seen"] = user_id_cache, last_seen
         save_state(state_path, state)
     except Exception as e:
+        logger.error(f"Error saving state: {e}")
         print(f"Error saving state: {e}", file=sys.stderr)
         sys.exit(2)
 
     if any_new:
+        logger.info("\nDone: new stories found.")
         print("\nDone: new stories found.")
         return 0
     else:
+        logger.info("\nDone: no new stories found.")
         print("\nDone: no new stories found.")
         return 0
 

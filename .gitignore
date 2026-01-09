@@ -6,3 +6,4 @@ story_state.json
 notify_users.txt
 downloads/
 __pycache__/
+app.log

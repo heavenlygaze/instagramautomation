@@ -7,7 +7,7 @@ from time import sleep
 from random import randint
 
 def login_with_session(session_path: Path, username: str, password: str) -> Client:
-    sleep(randint(10, 60))
+    sleep(randint(60, 120))
     cl = Client()
     if session_path.exists():
         try:
@@ -30,7 +30,7 @@ def resolve_targets_to_ids(cl: Client, target_usernames: List[str], cache: Dict[
         uid = cl.user_id_from_username(uname)
         cache[uname] = int(uid)
         resolved[uname] = int(uid)
-        time.sleep(0.3)
+        sleep(randint(2, 15))
     return resolved
 
 def story_pk(story_obj: Any) -> Optional[int]:
