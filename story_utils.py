@@ -1,5 +1,7 @@
 from instagrapi import Client
 from pathlib import Path
+from time import sleep
+from random import randint
 
 
 def download_stories(cl: Client, new_pks: list[int], out_dir: Path, uname: str) -> str:
@@ -13,6 +15,7 @@ def download_stories(cl: Client, new_pks: list[int], out_dir: Path, uname: str) 
 
     for pk in new_pks:
         try:
+            sleep(randint(3,15))
             path = cl.story_download(pk, folder=user_folder)
             print(f"  downloaded: {path}")
             last_downloaded_path = path  # Keep track of the last downloaded story path

@@ -92,6 +92,7 @@ def main() -> int:
     any_new = False
     for uname, uid in resolved.items():
         try:
+            sleep(random.uniform(args.min_sleep, args.max_sleep))
             stories = cl.user_stories(uid)
         except Exception as e:
             logger.warning(f"Failed fetching stories for @{uname}: {e}")
