@@ -1,9 +1,10 @@
 .env
 .idea/
 ig_session.json
+main_acc_data/*
 targets.txt
 story_state.json
 notify_users.txt
 downloads/
 __pycache__/
-app.log
+main_acc_data/
