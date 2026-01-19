@@ -8,3 +8,4 @@ notify_users.txt
 downloads/
 __pycache__/
 main_acc_data/
+app.log
