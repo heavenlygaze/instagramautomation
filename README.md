@@ -1,16 +1,17 @@
 # Instagram Story Checker with Email Notifications
 
+
 This script checks for new stories uploaded by users you follow on Instagram. It sends email notifications when a new story is uploaded by specific users, and optionally downloads the stories to your local system.
 
 ## Features:
 - Check for new stories uploaded by specified Instagram users.
-- Send email notifications when a new story is posted by a specific user.
+- Send email notifications when a new story is posted by selected users.
 - Optionally download the new stories to a local directory.
 - Store the last seen story for each user to avoid processing the same stories multiple times.
 
 ## Requirements:
 1. **Python 3.x** (Recommended: Python 3.8+)
-2. **Instagrapi**: A Python library for interacting with Instagram.
+2. **instagrapi**: A Python library for interacting with Instagram.
 3. **SMTP server credentials** (for Gmail in this case, with an App Password).
 
 ## Installation & Setup:
@@ -47,7 +48,7 @@ EMAIL_PASSWORD=your_16_character_app_password
 
 Create a `targets.txt` file with the usernames of the Instagram accounts you want to track. Each username should be on a new line, for example:
 
-```textxt
+```text
 user1
 user2
 user3
@@ -56,8 +57,13 @@ user3
 ### 4. Running the Script
 
 ```bash
-python main.py --targets targets.txt --download --out downloads
-
+python main.py \
+  --targets targets.txt \
+  --notify notify_users.txt \
+  --download \
+  --out downloads \
+  --min_sleep 1.5 \
+  --max_sleep 4.0
 ```
 
 - `--targets`: Path to the file that contains the usernames of the users you want to track.
@@ -69,17 +75,33 @@ python main.py --targets targets.txt --download --out downloads
 
 ### 5. Email Notifications
 
-The script will send an email notification whenever a new story is posted by any of the users listed in `users_to_notify` (defined in `main.py`). You can specify which users should trigger an email by editing the list:
+Email notifications are sent only for users listed in a separate file called `notify_users.txt`.
 
-```python
-users_to_notify = ['specific_user1', 'specific_user2']  # Define which users you want to be notified about
+This file should contain one Instagram username per line:
+
+```text
+user1
+user2
 ```
+
+To enable notifications, pass the file using:
+
+```bash
+python main.py --targets targets.txt --notify notify_users.txt
+```
+
+If `notify_users.txt` is missing or empty, the script will still run, but **no emails will be sent**.
+
+
 
 ### 6. File Structure
 
 ```graphql
 InstagramStoryChecker/
 │
+├── ig_session.json        # Instagram session cache (auto-created)
+├── notify_users.txt       # Users that trigger email notifications
+├── app.log                # Application log file
 ├── main.py                # The entry point of the program
 ├── config.py              # Configuration file for loading credentials
 ├── email_utils.py         # Functions to handle sending emails
@@ -127,7 +149,7 @@ When you run the script, you should see output similar to this
 
 ### 10. Troubleshooting
 
-- **Email not sent**: Ensure that you've enabled less secure apps for Gmail (if not using 2FA) or set up App Passwords properly if you're using two-factor authentication.
+- **Email not sent**: Ensure that you've set up App Passwords properly.
   
   If you face any issues with Gmail's SMTP, check your Google account settings or review Gmail's security settings.
 
@@ -135,19 +157,57 @@ When you run the script, you should see output similar to this
 
 - **Missing dependencies**: If you encounter missing dependencies, ensure you've installed all necessary Python packages.
 
+### Disclaimer
+
+This project is provided **for educational and research purposes only**.
+
+The script interacts with Instagram through unofficial means and may violate
+Instagram’s Terms of Service. The author does **not** encourage or endorse the
+use of this software for abusive, commercial, or large-scale automated activity.
+
+By using this software, you acknowledge and agree that:
+
+- You are solely responsible for how you use this code.
+- You understand that automating interactions with Instagram may result in
+  account restrictions, temporary blocks, or permanent bans.
+- The author assumes **no liability** for any damages, account actions, or losses
+  resulting from the use of this software.
+- You are responsible for ensuring your use complies with all applicable laws,
+  regulations, and platform terms.
+
+This project is shared to demonstrate concepts such as:
+- API interaction
+- Session handling
+- Rate limiting and randomized delays
+- State persistence
+- Email notifications and logging
+
+If you choose to use this code against the terms of any service, you do so
+**entirely at your own risk**.
 
 ### TODO
 
 In the future I would like to also expand this repo with the following modules:
 - Adding stories (photo/video) from files
 - Emailing when someone messages me/replies to a story
-- 
+-
+
+
+
+### Security Notes
+
+- Do NOT commit `.env`, `ig_session.json`, or proxy credentials
+- Use a dedicated Instagram account
+- Avoid running the script too frequently
+- Consider residential proxies for long-term use
+
+### Known Limitations
+
+- Uses Instagram private APIs (may break if Instagram changes behavior)
+- Accounts may be temporarily restricted if used aggressively
+- Gmail attachments are limited to ~25 MB; larger videos may fail to send
 
 
 ### License
 
 This project is licensed under the MIT License.
-
----
-
-**Note:** Make sure to keep your .env file secure and never share it publicly as it contains sensitive information (like your Gmail credentials and Instagram login details).

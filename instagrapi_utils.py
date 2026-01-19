@@ -7,8 +7,9 @@ from time import sleep
 from random import randint
 
 def login_with_session(session_path: Path, username: str, password: str) -> Client:
-    sleep(randint(60, 120))
+    sleep(randint(90, 180))
     cl = Client()
+    cl.delay_range = [1, 3]
     if session_path.exists():
         try:
             cl.load_settings(session_path.as_posix())
