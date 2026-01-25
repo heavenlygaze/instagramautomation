@@ -15,6 +15,7 @@ from email_utils import send_email
 
 logger = setup_logging()
 
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--targets", type=str, required=True, help="Path to targets.txt (one username per line)")
@@ -74,7 +75,6 @@ def main() -> int:
     # Load users to notify from external file
     users_to_notify = load_lines(notify_path)
 
-
     # Initialize Instagrapi client
     try:
         cl = login_with_session(session_path, username, password)
@@ -88,6 +88,9 @@ def main() -> int:
     except Exception as e:
         logger.error(f"Error resolving usernames to IDs: {e}")
         sys.exit(2)
+
+    # Track users and the number of new stories
+    stories_summary = {}
 
     any_new = False
     for uname, uid in resolved.items():
@@ -125,14 +128,9 @@ def main() -> int:
                 continue
         else:
             story_file_path = None
-        # Send an email if this user is in the 'users_to_notify' list
-        if uname in users_to_notify:
-            subject = f"New story posted by {uname}!"
-            body = f"Check out the latest story posted by @{uname} on Instagram."
-            if story_file_path:
-                send_email(subject, body, email_username, attachment_path=story_file_path)
-            else:
-                send_email(subject, body, email_username)
+
+        # Track the number of new stories for this user
+        stories_summary[uname] = len(new_pks)
 
         last_seen[uname] = max(new_pks)
         sleep(random.uniform(args.min_sleep, args.max_sleep))
@@ -145,12 +143,29 @@ def main() -> int:
         logger.error(f"Error saving state: {e}")
         sys.exit(2)
 
+    # Send a summary email at the end
     if any_new:
-        logger.info("\nDone: new stories found.")
-        return 0
+        email_subject = "New Stories from Users You Follow: Daily Recap"
+        email_body = "Here is a recap of the new stories uploaded by users you follow:\n\n"
+
+        for user, story_count in stories_summary.items():
+            email_body += f"@{user}: {story_count} new story(ies)\n"
+
+        try:
+            send_email(
+                subject=email_subject,
+                body=email_body,
+                to_email=email_username,
+            )
+        except Exception as e:
+            logger.error(f"Error sending recap email: {e}")
+
+        logger.info("\nDone: new stories found and recap email sent.")
     else:
         logger.info("\nDone: no new stories found.")
-        return 0
+
+    return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
