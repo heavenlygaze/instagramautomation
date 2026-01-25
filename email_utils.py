@@ -3,7 +3,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
-from email.mime.multipart import MIMEMultipart
 import os
 
 def send_email(subject: str, body: str, to_email: str, attachment_path: str = None) -> None:
